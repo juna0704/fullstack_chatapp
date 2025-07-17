@@ -5,14 +5,24 @@ import { generateToken, generateResetToken } from "../utils/utils.js";
 import cloudinary from "../config/cloudinary.js";
 
 //@desc this is register route
-//@route POST /api/v1/auth/register
+//@route POST /api/v1/users/register
 //@access public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, bio } = req.body;
+  const { name, email, password, bio, securityAnswer } = req.body;
+
   try {
-    //Validate data
-    if (!name || !email || !password || !bio) {
-      return res.status(400).json("all fields are required");
+    const missingFields = {};
+    if (!name) missingFields.name = null;
+    if (!email) missingFields.email = null;
+    if (!password) missingFields.password = null;
+    if (!bio) missingFields.bio = null;
+    if (!securityAnswer) missingFields.securityAnswer = null;
+
+    if (Object.keys(missingFields).length > 0) {
+      return res.status(400).json({
+        message: "All fields are required",
+        missingFields,
+      });
     }
 
     // Check if user already exists
@@ -32,6 +42,7 @@ const registerUser = asyncHandler(async (req, res) => {
       email,
       password: hashedPassword,
       bio,
+      securityAnswer: securityAnswer.trim(),
     });
 
     //Response with user and token
@@ -47,13 +58,15 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new Error("Invalid user data");
     }
   } catch (error) {
-    console.log(error.message);
-    res.json({ success: false, message: error.message });
+    console.error(error);
+    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({
+      message: error.message || "Server error during registration",
+    });
   }
 });
 
 //@desc this is login route
-//@route POST /api/v1/auth/login
+//@route POST /api/v1/users/login
 //@access public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -91,7 +104,10 @@ const loginUser = asyncHandler(async (req, res) => {
 //@route POST /api/users/forgot-password
 //@access public
 const forgotPassword = asyncHandler(async (req, res) => {
-  const { emailOrPhone } = req.body;
+  const { email, phone } = req.body;
+  const emailOrPhone = email || phone;
+
+  console.log("Received:", emailOrPhone);
 
   if (!emailOrPhone) {
     res.status(400);
@@ -146,7 +162,14 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new Error("Invalid or expired reset token");
   }
 
-  if (securityAnswer.toLowerCase() !== user.securityQuestion.toLowerCase()) {
+  // Safely compare securityAnswer
+  const storedAnswer = user.securityAnswer?.toLowerCase().trim();
+  const submittedAnswer = securityAnswer?.toLowerCase().trim();
+
+  console.log("Stored Answer:", `"${storedAnswer}"`);
+  console.log("Submitted Answer:", `"${submittedAnswer}"`);
+
+  if (!storedAnswer || storedAnswer !== submittedAnswer) {
     res.status(400);
     throw new Error("Security answer does not match");
   }
@@ -199,34 +222,6 @@ const checkAuth = (req, res) => {
   res.json({ success: true, user: req.user });
 };
 
-//Controller to update user profile details
-const updateProfile = asyncHandler(async (req, res) => {
-  try {
-    const { profilePic, bio, name } = req.body;
-    const userId = req.user._id;
-    let updatedUser;
-
-    if (!profilePic) {
-      updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { bio, name },
-        { new: true }
-      );
-    } else {
-      const upload = await cloudinary.uploader.upload(profilePic);
-      updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { profilePic: upload.secure_url, bio, name },
-        { new: true }
-      );
-    }
-    res.json({ success: true, user: updatedUser });
-  } catch (error) {
-    console.log(error.message);
-    res.json({ success: false, message: error.message });
-  }
-});
-
 export {
   registerUser,
   loginUser,
@@ -234,5 +229,4 @@ export {
   resetPassword,
   verifyResetToken,
   checkAuth,
-  updateProfile,
 };

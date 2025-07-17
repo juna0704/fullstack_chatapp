@@ -1,0 +1,19 @@
+{
+  "name": "Alice Johnson",
+  "email": "alice.johnson@example.com",
+  "password": "Passw0rd@123",
+  "phone": "+14155552671",
+  "bio": "Frontend developer and UI enthusiast. Loves clean code and coffee.",
+  "profilePic": "https://example.com/images/alice.jpg",
+  "securityQuestion": "What is your pet's name?",
+  "securityAnswer": "Fluffy",
+  "role": "user",
+  "preferences": {
+    "theme": "dark",
+    "notifications": {
+      "email": true,
+      "sms": false,
+      "push": true
+    }
+  }
+}

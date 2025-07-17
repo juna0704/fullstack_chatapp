@@ -49,6 +49,7 @@ const userSchema = new mongoose.Schema(
     },
     bio: {
       type: String,
+      required: [true, "Bio is required"],
       maxlength: [500, "Bio cannot exceed 500 characters"],
       trim: true,
     },
@@ -71,6 +72,7 @@ const userSchema = new mongoose.Schema(
     securityAnswer: {
       type: String,
       trim: true,
+      required: [true, "Security answer is required"],
     },
     resetPasswordToken: {
       type: String,

@@ -5,12 +5,13 @@ import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
-import userRoutes from "./routes/userRoutes.js";
 // Security middleware
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import mongoSanitize from "express-mongo-sanitize";
+// import mongoSanitize from "express-mongo-sanitize";
 import compression from "compression";
+import authRouter from "./routes/authRoutes.js";
+import profileRouter from "./routes/profileRoutes.js";
 
 dotenv.config();
 
@@ -39,7 +40,15 @@ app.use(cors(corsOptions));
 
 // Security middleware
 app.use(helmet());
-app.use(mongoSanitize()); // Prevent NoSQL injection attacks
+// app.use(
+//   mongoSanitize({
+//     replaceWith: "_",
+//     onSanitize: ({ req, key }) => {
+//       // Optional: Logging for debug
+//       console.warn(`This request had a sanitized key: ${key}`);
+//     },
+//   })
+// ); // Prevent NoSQL injection attacks
 app.use(compression()); // Compress responses
 
 // Rate limiting
@@ -104,7 +113,8 @@ app.get("/health", (req, res) => {
 });
 
 // API routes
-app.use("/api/v1/users", userRoutes);
+app.use("/api/auth", authRouter);
+app.use("/api/profile", profileRouter);
 
 // 404 handler for undefined routes
 // app.use("*", (req, res) => {
