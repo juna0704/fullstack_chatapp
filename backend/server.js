@@ -40,6 +40,10 @@ const corsOptions = {
 // CORS with proper configuration
 app.use(cors(corsOptions));
 
+export const io = new Server(server, {
+  cors: { origin: "*" },
+});
+
 // Security middleware
 app.use(helmet());
 // app.use(
