@@ -12,6 +12,8 @@ import rateLimit from "express-rate-limit";
 import compression from "compression";
 import authRouter from "./routes/authRoutes.js";
 import profileRouter from "./routes/profileRoutes.js";
+import messageRouter from "./routes/messageRouter.js";
+import { Server } from "socket.io";
 
 dotenv.config();
 
@@ -114,15 +116,8 @@ app.get("/health", (req, res) => {
 
 // API routes
 app.use("/api/auth", authRouter);
-app.use("/api/profile", profileRouter);
-
-// 404 handler for undefined routes
-// app.use("*", (req, res) => {
-//   res.status(404).json({
-//     success: false,
-//     message: `Route ${req.originalUrl} not found`,
-//   });
-// });
+app.use("/api/profiles", profileRouter);
+app.use("/api/messages", messageRouter);
 
 // Global error handling middleware
 app.use((error, req, res, next) => {

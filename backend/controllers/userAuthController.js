@@ -2,7 +2,6 @@ import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import { generateToken, generateResetToken } from "../utils/utils.js";
-import cloudinary from "../config/cloudinary.js";
 
 //@desc this is register route
 //@route POST /api/v1/users/register
