@@ -1,8 +1,10 @@
 import { socketAuthMiddleware } from "./authMiddleware.js";
 
 const userSocketMap = new Map(); // Map<userId, socketId>
+let ioInstance;
 
 export const initSocket = (io) => {
+  ioInstance = io;
   io.use(socketAuthMiddleware);
 
   io.on("connection", (socket) => {
@@ -28,4 +30,4 @@ export const initSocket = (io) => {
 };
 
 // Export the map to access from controllers
-export { userSocketMap };
+export { userSocketMap, ioInstance as io };

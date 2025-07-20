@@ -1,17 +1,8 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
-import { v2 as cloudinary } from "cloudinary";
-import dotenv from "dotenv";
+import cloudinary from "../config/cloudinary.js";
 import path from "path";
 import { fileURLToPath } from "url";
-
-dotenv.config();
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 // get user profile
 const getUserProfile = asyncHandler(async (req, res) => {
@@ -69,11 +60,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     let updatedUser;
 
     let imageUrl;
-    // console.log("Received profilePic:", profilePic);
-    // console.log("Uploading to Cloudinary...");
-    // console.log("profilePic type:", typeof profilePic);
-    // console.log("profilePic length (if string):", profilePic?.length);
-
     if (profilePic) {
       // Upload user-provided image (base64 or URL)
       const upload = await cloudinary.uploader.upload(profilePic);

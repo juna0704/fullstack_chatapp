@@ -3,32 +3,48 @@ import User from "../models/userModel.js";
 import Message from "../models/messageModel.js";
 import cloudinary from "../config/cloudinary.js";
 import { userSocketMap } from "../socket/socket.js";
+import { io } from "../socket/socket.js";
 
 // Get all users except the logged-in user, and their unseen messages count
 const getUserForSidebar = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
+
+    // Find all users except the requester
     const filteredUsers = await User.find({ _id: { $ne: userId } }).select(
       "-password"
     );
 
-    const unseenMessages = {};
-    const promises = filteredUsers.map(async (user) => {
-      const messages = await Message.find({
-        senderId: user._id, // ✅ fixed typo
-        receiverId: userId,
-        seen: false,
-      });
-      if (messages.length > 0) {
-        unseenMessages[user._id] = messages.length;
-      }
-    });
+    // Aggregate unseen message counts grouped by senderId
+    const unseenMessagesArray = await Message.aggregate([
+      {
+        $match: {
+          receiverId: new mongoose.Types.ObjectId(userId),
+          seen: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$senderId",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-    await Promise.all(promises);
-    res.json({ success: true, users: filteredUsers, unseenMessages });
+    // Convert array to object map
+    const unseenMessages = unseenMessagesArray.reduce((acc, curr) => {
+      acc[curr._id.toString()] = curr.count;
+      return acc;
+    }, {});
+
+    res.json({
+      success: true,
+      users: filteredUsers,
+      unseenMessages,
+    });
   } catch (error) {
-    console.log(error.message); // ✅ fixed typo
-    res.json({ success: false, message: error.message });
+    console.error(error.message);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -43,7 +59,7 @@ const getMessages = asyncHandler(async (req, res) => {
         { senderId: myId, receiverId: selectedUserId },
         { senderId: selectedUserId, receiverId: myId },
       ],
-    }).sort({ createdAt: 1 }); // ✅ optional sorting
+    }).sort({ createdAt: 1 }); //
 
     await Message.updateMany(
       { senderId: selectedUserId, receiverId: myId },
