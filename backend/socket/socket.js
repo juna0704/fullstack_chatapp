@@ -1,17 +1,31 @@
-export const userSocketMap = {};
+import { socketAuthMiddleware } from "./authMiddleware.js";
 
-//Socket.io connection handler
-io.on("connection", (socket) => {
-  const userId = socket.handshake.query.userId;
-  console.log("User connected", userId);
-  if (userId) userSocketMap[userId] = socket.userId;
+const userSocketMap = new Map(); // Map<userId, socketId>
 
-  //Emit online users to all connected clients
-  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+export const initSocket = (io) => {
+  io.use(socketAuthMiddleware);
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected", userId);
-    delete userSocketMap[userId];
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  io.on("connection", (socket) => {
+    const userId = socket.user?.id;
+
+    if (!userId) {
+      socket.disconnect();
+      return;
+    }
+
+    console.log(`🔌 User connected: ${userId}`);
+    userSocketMap.set(userId, socket.id);
+
+    // Broadcast online users
+    io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
+
+    socket.on("disconnect", () => {
+      console.log(`⚡ User disconnected: ${userId}`);
+      userSocketMap.delete(userId);
+      io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
+    });
   });
-});
+};
+
+// Export the map to access from controllers
+export { userSocketMap };

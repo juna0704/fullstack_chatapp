@@ -1,8 +1,10 @@
 import asyncHandler from "express-async-handler";
-import User from "../models/userModel";
-import Message from "../models/messageModel";
+import User from "../models/userModel.js";
+import Message from "../models/messageModel.js";
 import cloudinary from "../config/cloudinary.js";
+import { userSocketMap } from "../socket/socket.js";
 
+// Get all users except the logged-in user, and their unseen messages count
 const getUserForSidebar = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
@@ -10,11 +12,10 @@ const getUserForSidebar = asyncHandler(async (req, res) => {
       "-password"
     );
 
-    //count number of messages not seen
     const unseenMessages = {};
     const promises = filteredUsers.map(async (user) => {
       const messages = await Message.find({
-        senderId: userId,
+        senderId: user._id, // ✅ fixed typo
         receiverId: userId,
         seen: false,
       });
@@ -22,14 +23,16 @@ const getUserForSidebar = asyncHandler(async (req, res) => {
         unseenMessages[user._id] = messages.length;
       }
     });
+
     await Promise.all(promises);
     res.json({ success: true, users: filteredUsers, unseenMessages });
   } catch (error) {
-    console.log(error.messages);
+    console.log(error.message); // ✅ fixed typo
     res.json({ success: false, message: error.message });
   }
 });
 
+// Get chat messages between current user and selected user
 const getMessages = asyncHandler(async (req, res) => {
   try {
     const { id: selectedUserId } = req.params;
@@ -40,18 +43,21 @@ const getMessages = asyncHandler(async (req, res) => {
         { senderId: myId, receiverId: selectedUserId },
         { senderId: selectedUserId, receiverId: myId },
       ],
-    });
+    }).sort({ createdAt: 1 }); // ✅ optional sorting
+
     await Message.updateMany(
       { senderId: selectedUserId, receiverId: myId },
       { seen: true }
     );
+
+    res.json({ success: true, messages });
   } catch (error) {
     console.log(error.message);
     res.json({ success: false, message: error.message });
   }
 });
 
-//api to mark message as seen using message id
+// Mark a specific message as seen
 const markMessageAsSeen = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
@@ -63,7 +69,7 @@ const markMessageAsSeen = asyncHandler(async (req, res) => {
   }
 });
 
-//Send message to selected user
+// Send a message with optional image upload
 const sendMessage = asyncHandler(async (req, res) => {
   try {
     const { text, image } = req.body;
@@ -75,12 +81,19 @@ const sendMessage = asyncHandler(async (req, res) => {
       const uploadResponse = await cloudinary.uploader.upload(image);
       imageUrl = uploadResponse.secure_url;
     }
+
     const newMessage = await Message.create({
       senderId,
       receiverId,
       text,
       image: imageUrl,
     });
+
+    const receiverSocketId = userSocketMap[receiverId];
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
     res.json({ success: true, newMessage });
   } catch (error) {
     console.log(error.message);
@@ -88,4 +101,4 @@ const sendMessage = asyncHandler(async (req, res) => {
   }
 });
 
-export { getUserForSidebar, markMessageAsSeen, getMessages };
+export { getUserForSidebar, markMessageAsSeen, getMessages, sendMessage };

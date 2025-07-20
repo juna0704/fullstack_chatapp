@@ -4,7 +4,7 @@ import {
   getUserProfile,
   deleteUserProfile,
 } from "../controllers/userProfileController.js";
-import protect from "../middlewares/authMiddleware.js";
+import protect from "../middleware/authMiddleware.js";
 
 const profileRouter = express.Router();
 
