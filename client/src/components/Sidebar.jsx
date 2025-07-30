@@ -30,7 +30,15 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
                 Edit Profile
               </p>
               <hr className="my-2 border-t border-gray-500" />
-              <p className="cursor-pointer text-sm">Logout</p>
+              {/* <p
+                className="cursor-pointer text-sm"
+                onClick={() => {
+                  localStorage.removeItem("userToken"); // if you're storing a login token/flag
+                  navigate("/login");
+                }}
+              >
+                Logout
+              </p> */}
             </div>
           </div>
         </div>
