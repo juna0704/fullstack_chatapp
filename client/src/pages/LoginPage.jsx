@@ -1,87 +1,129 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import assets from "../assets/assets";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const LoginPage = () => {
-  const [currState, setCurrState] = useState("Sign up");
+  const [currState, setCurrState] = useState("Login");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [bio, setBio] = useState("");
-  const [isDataSubmitted, setIsDataSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+
+  const toggleState = () => {
+    setCurrState(currState === "Sign up" ? "Login" : "Sign up");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const credentials =
+      currState === "Sign up"
+        ? { fullName, email, password, bio }
+        : { email, password };
+
+    await login(currState.toLowerCase(), credentials);
+
+    setIsSubmitting(false);
+    if (currState === "Login") {
+      navigate("/");
+    } else {
+      setCurrState("Login"); // After signup, switch to login
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-cover bg-center flex items-center justify-center gap-8 sm:justify-evenly max-sm:flex-col backdrop-blur-2xl">
-      {/* -------- left -------- */}
-      <img src={assets.logo_big} alt="Logo" className="w-[min(30vw, 250px)]" />
+    <div className="relative min-h-screen bg-cover bg-center bg-[url('/your-background.jpg')]">
+      {/* Optional Overlay */}
+      <div className="absolute inset-0 bg-black/40 z-0" />
 
-      {/* -------- right -------- */}
-      <form className="border-2 bg-white/8 text-white border-gray-500 p-6 flex flex-col gap-6 rounded-lg shadow-lg">
-        <h2 className="font-medium text-2xl flex justify-between items-center">
-          {currState}
+      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between min-h-screen px-8 py-12 gap-10 backdrop-blur-2xl bg-white/5">
+        {/* ----- Left Logo Section ----- */}
+        <div className="flex flex-col items-center text-center w-full md:w-1/2 px-4">
           <img
-            src={assets.arrow_icon}
-            alt="Switch"
-            className="w-5 cursor-pointer"
-            onClick={() =>
-              setCurrState(currState === "Sign up" ? "Login" : "Sign up")
-            }
+            src={assets.logo_big}
+            alt="Logo"
+            className="w-[min(30vw,200px)] mb-4 drop-shadow-xl"
           />
-        </h2>
+          <h1 className="text-3xl font-bold text-white">Welcome back!</h1>
+          <p className="text-gray-300 mt-2 max-w-md">
+            Sign up or log in to access your personalized dashboard and tools.
+          </p>
+        </div>
 
-        {currState === "Sign up" && !isDataSubmitted && (
+        {/* ----- Right Auth Form ----- */}
+        <form
+          onSubmit={handleSubmit}
+          className="w-full md:w-1/2 max-w-lg bg-white/10 backdrop-blur-md border border-white/30 rounded-xl p-8 shadow-xl text-white"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold">{currState}</h2>
+            <img
+              src={assets.arrow_icon}
+              alt="Switch"
+              className="w-6 cursor-pointer hover:rotate-180 transition-transform"
+              onClick={toggleState}
+              title="Switch"
+            />
+          </div>
+
+          {/* Conditional Full Name */}
+          {currState === "Sign up" && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="input-style mb-4"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          )}
+
           <input
-            type="text"
-            placeholder="Full Name"
-            className="p-2 border border-gray-500 rounded-md focus:outline-none"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            type="email"
+            placeholder="Email"
+            className="input-style mb-4"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
-        )}
-
-        {!isDataSubmitted && (
-          <>
-            <input
-              type="email"
-              placeholder="Email Address"
-              className="p-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+          <input
+            type="password"
+            placeholder="Password"
+            className="input-style mb-4"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          {currState === "Sign up" && (
+            <textarea
+              placeholder="Your Bio"
+              className="input-style resize-none h-24 mb-4"
+              rows="3"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
               required
             />
+          )}
 
-            <input
-              type="password"
-              placeholder="Password"
-              className="p-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            {currState === "Sign up" && (
-              <textarea
-                placeholder="Your Bio"
-                className="p-2 border border-gray-500 rounded-md focus:outline-none"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-              />
-            )}
-          </>
-        )}
-
-        <button
-          type="submit"
-          className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-2 px-4 rounded-md hover:opacity-90"
-          onClick={(e) => {
-            e.preventDefault();
-            setIsDataSubmitted(true);
-            // submit logic goes here
-          }}
-        >
-          {currState}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-full py-2 rounded-md bg-gradient-to-r from-purple-500 to-indigo-600 transition-opacity font-semibold ${
+              isSubmitting
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:opacity-90"
+            }`}
+          >
+            {isSubmitting ? "Please wait..." : currState}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
