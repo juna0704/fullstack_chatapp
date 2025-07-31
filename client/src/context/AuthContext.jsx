@@ -65,20 +65,38 @@ export const AuthProvider = ({ children }) => {
 
   // Login function example (simplified)
   const login = async (state, credentials) => {
+    const validRoutes = ["login", "register"];
+    if (!validRoutes.includes(state)) {
+      toast.error("Invalid auth route: " + state);
+      return false;
+    }
+
     try {
       const { data } = await axios.post(`/api/auth/${state}`, credentials);
-      if (data.success) {
-        setAuthUser(data.userData);
-        connectSocket(data.userData);
+
+      // Check if token and _id exist (i.e., login successful)
+      if (data.token && data._id) {
+        const userData = {
+          _id: data._id,
+          name: data.name,
+          email: data.email,
+        };
+
+        setAuthUser(userData);
+        connectSocket(userData);
         axios.defaults.headers.common["token"] = data.token;
         setToken(data.token);
         localStorage.setItem("token", data.token);
-        toast.success(data.message);
+        toast.success(data.message || "Login successful");
+
+        return true;
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Login failed");
+        return false;
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || error.message);
+      return false;
     }
   };
 

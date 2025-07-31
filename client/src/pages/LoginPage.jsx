@@ -4,18 +4,19 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 const LoginPage = () => {
-  const [currState, setCurrState] = useState("Login");
-  const [fullName, setFullName] = useState("");
+  const [currState, setCurrState] = useState("login");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [bio, setBio] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [securityAnswer, setSecurityAnswer] = useState("");
 
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
   const toggleState = () => {
-    setCurrState(currState === "Sign up" ? "Login" : "Sign up");
+    setCurrState(currState === "register" ? "login" : "register");
   };
 
   const handleSubmit = async (e) => {
@@ -23,17 +24,17 @@ const LoginPage = () => {
     setIsSubmitting(true);
 
     const credentials =
-      currState === "Sign up"
-        ? { fullName, email, password, bio }
+      currState === "register"
+        ? { name, email, password, bio, securityAnswer }
         : { email, password };
 
-    await login(currState.toLowerCase(), credentials);
+    const success = await login(currState.toLowerCase(), credentials);
 
     setIsSubmitting(false);
-    if (currState === "Login") {
+    if (success && currState === "login") {
       navigate("/");
-    } else {
-      setCurrState("Login"); // After signup, switch to login
+    } else if (success && currState === "register") {
+      setCurrState("login");
     }
   };
 
@@ -73,13 +74,13 @@ const LoginPage = () => {
           </div>
 
           {/* Conditional Full Name */}
-          {currState === "Sign up" && (
+          {currState === "register" && (
             <input
               type="text"
               placeholder="Full Name"
               className="input-style mb-4"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
             />
           )}
@@ -100,13 +101,23 @@ const LoginPage = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          {currState === "Sign up" && (
+          {currState === "register" && (
             <textarea
               placeholder="Your Bio"
               className="input-style resize-none h-24 mb-4"
               rows="3"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
+              required
+            />
+          )}
+          {currState === "register" && (
+            <input
+              type="text"
+              placeholder="Security Answer"
+              className="input-style mb-4"
+              value={securityAnswer}
+              onChange={(e) => setSecurityAnswer(e.target.value)}
               required
             />
           )}

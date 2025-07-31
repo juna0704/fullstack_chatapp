@@ -31,6 +31,11 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK", uptime: process.uptime() });
 });
 
+// Express (Node.js) example
+app.get("/api/ping", (req, res) => {
+  res.json({ message: "pong" });
+});
+
 // API Routes
 app.use("/api/auth", authRouter);
 app.use("/api/profiles", profileRouter);

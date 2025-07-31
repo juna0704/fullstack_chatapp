@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -10,8 +10,22 @@ import { AuthContext } from "./context/AuthContext";
 const App = () => {
   const { authUser } = useContext(AuthContext);
 
+  const fetchData = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/ping");
+      const data = await res.json();
+      console.log("Backend responded with:", data);
+    } catch (error) {
+      console.error("Error talking to backend:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
-    <div className="bg-[url('./src/assets/bgImage.svg')] bg-contain">
+    <div className="bg-[url('./src/assets/bgImage.svg')] bg-contain min-h-screen">
       <ToastContainer position="top-right" />
       <Routes>
         {/* Public route */}

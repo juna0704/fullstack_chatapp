@@ -65,6 +65,19 @@ export const ChatProvider = ({ children }) => {
     };
   }, [socket, selectedUser]);
 
+  const getUsers = async () => {
+    try {
+      const { data } = await axios.get("/api/messages/users"); // ✅ updated path
+      setUsers(data);
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Failed to fetch users"
+      );
+    }
+  };
+
   const value = {
     messages,
     setMessages,
@@ -74,6 +87,7 @@ export const ChatProvider = ({ children }) => {
     setSelectedUser,
     unseenMessages,
     setUnseenMessages,
+    getUsers,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
